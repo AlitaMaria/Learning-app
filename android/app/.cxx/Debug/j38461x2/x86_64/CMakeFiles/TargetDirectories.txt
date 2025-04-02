@@ -1,0 +1,2 @@
+C:/Users/user69/Desktop/alita/learningapp/android/app/.cxx/Debug/j38461x2/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/user69/Desktop/alita/learningapp/android/app/.cxx/Debug/j38461x2/x86_64/CMakeFiles/rebuild_cache.dir
