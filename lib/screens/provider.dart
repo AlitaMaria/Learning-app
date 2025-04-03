@@ -23,10 +23,15 @@ this.mail="",
     print("dddddddddddddd $_items");//data retrieve cheyumbo call akunila
     notifyListeners();
   }
-  void updateClasses(List<String> classes) {
-    _items = classes;
-    notifyListeners();
+ void updateClasses(List<String> newClasses) {
+  for (String item in newClasses) {
+    if (!_items.contains(item)) {  // ✅ Avoid duplicates
+      _items.add(item);
+    }
   }
+  notifyListeners();
+}
+
   void  changeUsername({
     required String newUsername,
      required String newPassword,

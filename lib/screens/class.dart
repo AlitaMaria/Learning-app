@@ -29,12 +29,13 @@ final List<double> progressList = [0.3, 0.6, 0.8, 0.5];
     copyFromProvider(context);
     addUserclasses();
     retrieveData();
-    getUserClasses();
+
+    print("my classes invoked");
   }
   void copyFromProvider(BuildContext context) {
     final provider = Provider.of<UserProvider>(context, listen: false);
     setState(() {
-      adclasses = List.from(provider.items); // Copy values from Provider list
+      adclasses = List.from(provider.items,growable: true); // Copy values from Provider list
     });}
 
  Future<String?> retrieveData() async {
@@ -44,7 +45,9 @@ final List<double> progressList = [0.3, 0.6, 0.8, 0.5];
 
     setState(() {
       _username = username;
+      print("shared preference $_username  $username");
     });
+        getUserClasses();
   }
 
   Future<void> addUserclasses() async {
@@ -55,13 +58,24 @@ final List<double> progressList = [0.3, 0.6, 0.8, 0.5];
 //adding data to database
 //
       DataSnapshot snapshot = await ref.get();
-      if (snapshot.exists) {
-        await ref.child(_username!).update({
-            "addedClasses": adclasses,
-          });
+     if (snapshot.exists) {
+  // ✅ Retrieve existing classes before adding new ones
+  List<dynamic> existingClasses = snapshot.child(_username!).child("addedClasses").value as List<dynamic>? ?? [];
+  print(existingClasses.runtimeType);
+  List<String> classList = List<String>.from(existingClasses, growable: true);
 
+  for (String item in adclasses) {
+    if (!classList.contains(item)) {  // ✅ Avoid duplicates
+      classList.add(item);
+    }
+  }
 
-      }      
+  await ref.child(_username!).update({
+    "addedClasses": classList, // ✅ Update merged list
+   
+  });
+   print("hhhhhhhhhhhhhhhhhhhhh ${classList.runtimeType}");
+}      
     }
       catch (e) {
       print("Error fetching user data: $e");
@@ -76,23 +90,32 @@ final List<double> progressList = [0.3, 0.6, 0.8, 0.5];
   
 
 void getUserClasses() {
+    print("ddddddddddddd $_username");
   if (_username == null) return;
 
-  DatabaseReference userRef = ref.child("$_username/addedClasses");
-  userRef.onValue.listen((DatabaseEvent event) {
-    if (event.snapshot.exists && mounted) {  // ✅ Check if widget is mounted
-      List<dynamic> classes = event.snapshot.value as List<dynamic>;
-      List<String> classList = classes.cast<String>();
+DatabaseReference userRef = ref.child(_username!).child("addedClasses");
+userRef.onValue.listen((DatabaseEvent event) {
+  if (event.snapshot.exists && mounted) {
+    List<dynamic> classes = event.snapshot.value as List<dynamic>;
+    print("yyyyyyyyyyyyyyyyyyyy ${classes.runtimeType}");
+    List<String> classList = List<String>.from(classes, growable: true);
+    print("ppppppppppppppppppppppppppppp ${classList.runtimeType}");
 
-      // ✅ Update Provider safely
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      userProvider.updateClasses(classList);
+    // ✅ Append new data instead of replacing it
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    List<String> updatedList = List<String>.from(userProvider.items, growable: true);
 
-      print("User classes updated: $classList");  // Debugging log
-    } else {
-      print("No classes found for user $_username");
+    for (String item in classList) {
+      if (!updatedList.contains(item)) {  // Avoid duplicates
+        updatedList.add(item);
+      }
     }
-  });
+
+    userProvider.updateClasses(updatedList); // ✅ Update with merged list
+    print("User classes updated: $updatedList");
+  }
+});
+
 }
 
   @override
